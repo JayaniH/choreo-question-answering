@@ -85,7 +85,8 @@ def construct_prompt(question) -> str:
     # print("\n".join(chosen_sections_indexes))
 
     header = """Answer the question as truthfully as possible using the provided context, and if the answer is not 
-    contained within the text below, say "I don't know."\n\nContext:\n"""
+    contained within the text below, say "Sorry, I didn't understand the question. 
+    If it is about Choreo, could you please rephrase it and try again?"\n\nContext:\n"""
 
     return header + "".join(chosen_sections) + "\n\n Q: " + question + "\n A:"
 

@@ -8,8 +8,16 @@ def generate_answer():
 
     json_body = request.json
     question = json_body.get('question')
-    answer = answer_query_with_context(question)
 
-    return {
-        'answer': answer
-    }
+    try:
+        answer = answer_query_with_context(question)
+
+        return {
+            'answer': answer
+        }
+
+    except:
+
+        return {
+            'answer': 'Sorry, there was an error generating the answer. Could you please try again?'
+        }
