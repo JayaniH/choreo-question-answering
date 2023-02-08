@@ -1,3 +1,4 @@
+import logging
 import os
 
 import numpy as np
@@ -99,12 +100,19 @@ def answer_query_with_context(query, show_prompt=False):
         print('Completion model:', COMPLETIONS_API_PARAMS['model'])
         print(prompt)
 
-    response = openai.Completion.create(
-        prompt=prompt,
-        **COMPLETIONS_API_PARAMS
-    )
+    try:
 
-    return response["choices"][0]["text"].strip(" \n")
+        response = openai.Completion.create(
+            prompt=prompt,
+            **COMPLETIONS_API_PARAMS
+        )
+
+        return response["choices"][0]["text"].strip(" \n")
+
+
+    except Exception as e:
+        logging.error("Failed to generate response from the model: " + str(e), exc_info=True)
+        return "Sorry, there was an error generating the answer. Could you please try again?"
 
 
 if __name__ == "__main__":
