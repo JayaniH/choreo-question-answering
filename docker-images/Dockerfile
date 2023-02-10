@@ -14,7 +14,9 @@ COPY docker-images/requirements.txt requirements.txt
 RUN pip3 install --upgrade pip
 RUN pip3 install -r requirements.txt
 
-COPY . .
+COPY data/ data/
+COPY service/ service/
+COPY app.py .
 
 RUN ls
 USER 10016
