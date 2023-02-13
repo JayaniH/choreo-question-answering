@@ -6,7 +6,8 @@ import openai
 import pandas as pd
 import tiktoken
 
-from service.constants import COMPLETIONS_API_PARAMS, ENCODING, MAX_SECTION_LEN, SEPARATOR, EMBEDDING_MODEL
+from service.constants import COMPLETIONS_API_PARAMS, ENCODING, MAX_SECTION_LEN, SEPARATOR, EMBEDDING_MODEL, \
+    DOCUMENT_LIBRARY_PATH
 from service.utils import get_document_embeddings, get_question_embeddings
 
 
@@ -66,7 +67,7 @@ def construct_prompt(question) -> str:
     encoding = tiktoken.get_encoding(ENCODING)
     separator_len = len(encoding.encode(SEPARATOR))
 
-    df = pd.read_csv("data/choreo_docs_library_with_tokens.csv")
+    df = pd.read_csv(DOCUMENT_LIBRARY_PATH)
     df = df.set_index(["title", "heading"])
     df = df.sort_index()
 
@@ -112,11 +113,3 @@ def answer_query_with_context(query, show_prompt=False):
     except Exception as e:
         logging.error("Failed to generate response from the model: " + str(e), exc_info=True)
         return "Sorry, there was an error generating the answer. Could you please try again?"
-
-
-if __name__ == "__main__":
-
-    openai.api_key = os.getenv("OPENAI_API_KEY")
-    question = "What is WSO2 Choreo?"
-    answer = answer_query_with_context(question)
-    print(answer)
