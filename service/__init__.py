@@ -1,6 +1,7 @@
 import logging
 
 import gspread
+import openai
 from flask import Flask
 import os
 
@@ -16,6 +17,11 @@ def create_app():
     global openai_key
     global gsclient
     openai_key = os.getenv("OPENAI_API_KEY")
+
+    openai.api_key = openai_key
+    openai.api_base = "https://choreo-chatbot-openai.openai.azure.com/"
+    openai.api_type = 'azure'
+    openai.api_version = '2022-12-01'
 
     scope = ['https://www.googleapis.com/auth/spreadsheets',
              "https://www.googleapis.com/auth/drive"]

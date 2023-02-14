@@ -14,7 +14,7 @@ from service.utils import get_document_embeddings, get_question_embeddings
 def get_embedding(text):
 
     result = openai.Embedding.create(
-      model=EMBEDDING_MODEL,
+      engine=EMBEDDING_MODEL,
       input=text
     )
 
