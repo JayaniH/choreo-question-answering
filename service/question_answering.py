@@ -1,14 +1,19 @@
 import logging
 import os
+import time
 
 import numpy as np
 import openai
 import pandas as pd
 import tiktoken
+import weaviate
 
 from service.constants import COMPLETIONS_API_PARAMS, ENCODING, MAX_SECTION_LEN, SEPARATOR, EMBEDDING_MODEL, \
     DOCUMENT_LIBRARY_PATH
 from service.utils import get_document_embeddings, get_question_embeddings
+
+# initialize weaviate client for importing and searching
+client = weaviate.Client("https://choreo-chatbot.weaviate.network")
 
 
 def get_embedding(text):
@@ -54,33 +59,45 @@ def order_document_sections_by_query_similarity(query):
     return document_similarities
 
 
+def search(query="", limit=3):
+    before = time.time()
+    vec = get_embedding(query)
+    vec_took = time.time() - before
+
+    before = time.time()
+    near_vec = {"vector": vec}
+    res = client \
+        .query.get("ChoreoDocs", ["docs", "tokens", "_additional {certainty}"]) \
+        .with_near_vector(near_vec) \
+        .with_limit(limit) \
+        .do()
+    search_took = time.time() - before
+
+    print("\nQuery \"{}\" with {} results took {:.3f}s ({:.3f}s to vectorize and {:.3f}s to search)" \
+          .format(query, limit, vec_took+search_took, vec_took, search_took))
+    documents = res["data"]["Get"]["ChoreoDocs"]
+    return documents
+
+
 def construct_prompt(question) -> str:
     """
     Fetch relevant
     """
-    most_relevant_document_sections = order_document_sections_by_query_similarity(question)
+    most_relevant_document_sections = search(question, limit=10)
 
     chosen_sections = []
     chosen_sections_len = 0
-    chosen_sections_indexes = []
 
     encoding = tiktoken.get_encoding(ENCODING)
     separator_len = len(encoding.encode(SEPARATOR))
 
-    df = pd.read_csv(DOCUMENT_LIBRARY_PATH)
-    df = df.set_index(["title", "heading"])
-    df = df.sort_index()
-
-    for _, section_index in most_relevant_document_sections:
+    for document_section in most_relevant_document_sections:
         # Add contexts until we run out of space.
-        document_section = df.loc[section_index].iloc[0]
-
-        chosen_sections_len += document_section.tokens + separator_len
+        chosen_sections_len += document_section['tokens'] + separator_len
         if chosen_sections_len > MAX_SECTION_LEN:
             break
 
-        chosen_sections.append(SEPARATOR + document_section.content.replace("\n", " "))
-        chosen_sections_indexes.append(str(section_index))
+        chosen_sections.append(SEPARATOR + document_section['docs'].replace("\n", " "))
 
     # Useful diagnostic information
     # print(f"Selected {len(chosen_sections)} document sections:")
