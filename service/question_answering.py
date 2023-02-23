@@ -13,7 +13,9 @@ from service.constants import COMPLETIONS_API_PARAMS, ENCODING, MAX_SECTION_LEN,
 from service.utils import get_document_embeddings, get_question_embeddings
 
 # initialize weaviate client for importing and searching
-client = weaviate.Client("https://choreo-chatbot.weaviate.network")
+client = weaviate.Client("https://choreo-chatbot.weaviate.network",
+                         timeout_config=(5, 60)
+                         )
 
 
 def get_embedding(text):
