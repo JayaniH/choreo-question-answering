@@ -75,7 +75,7 @@ def search(query="", limit=3):
         .do()
     search_took = time.time() - before
 
-    logging.info("\nQuery \"{}\" with {} results took {:.3f}s ({:.3f}s to vectorize and {:.3f}s to search)" \
+    logging.error("\nQuery \"{}\" with {} results took {:.3f}s ({:.3f}s to vectorize and {:.3f}s to search)" \
           .format(query, limit, vec_took+search_took, vec_took, search_took))
     # print("\nQuery \"{}\" with {} results took {:.3f}s ({:.3f}s to vectorize and {:.3f}s to search)" \
     #       .format(query, limit, vec_took+search_took, vec_took, search_took))
