@@ -1,7 +1,7 @@
 import logging
 import pickle
 
-from gspread import SpreadsheetNotFound
+from gspread import SpreadsheetNotFound, WorksheetNotFound
 
 from service import gsclient
 from service.constants import DOCUMENT_EMBEDDINGS_PATH, QUESTION_EMBEDDINGS_PATH
@@ -24,7 +24,8 @@ def get_question_embeddings():
 def save_questions_and_answers(question, answer):
     if gsclient:
         try:
-            sheet = gsclient.open("Choreo Chatbot - Collected Data").sheet1
+            # sheet = gsclient.open("Choreo Chatbot - Collected Data").sheet1
+            sheet = gsclient.open("Choreo Chatbot - Collected Data").worksheet("v1.4")
             sheet.append_row([question, answer])
 
         except SpreadsheetNotFound:
@@ -32,7 +33,17 @@ def save_questions_and_answers(question, answer):
                           exc_info=True)
             sheet = gsclient.create("Choreo Chatbot - Collected Data")
             sheet.share('jayanih@wso2.com', perm_type='user', role='writer')
-            sheet = gsclient.open("NewDatabase").sheet1
+            # sheet = gsclient.open("Choreo Chatbot - Collected Data").sheet1
+            sheet = gsclient.open("Choreo Chatbot - Collected Data")
+            sheet = sheet.add_worksheet(title="v1.4")
+            sheet.append_row('Question', 'Answer')
+            sheet.append_row([question, answer])
+
+        except WorksheetNotFound:
+            logging.error("Worksheet to write the data not found. Creating new worksheet.",
+                          exc_info=True)
+            sheet = gsclient.open("Choreo Chatbot - Collected Data")
+            sheet = sheet.add_worksheet(title="v1.4", rows=1000, cols=20)
             sheet.append_row('Question', 'Answer')
             sheet.append_row([question, answer])
 

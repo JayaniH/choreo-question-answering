@@ -21,8 +21,8 @@ client = weaviate.Client("https://choreo-chatbot.weaviate.network",
 def get_embedding(text):
 
     result = openai.Embedding.create(
-      engine=EMBEDDING_MODEL,
-      input=text
+        engine=EMBEDDING_MODEL,
+        input=text
     )
 
     return result["data"][0]["embedding"]
@@ -69,17 +69,17 @@ def search(query="", limit=3):
     before = time.time()
     near_vec = {"vector": vec}
     res = client \
-        .query.get("ChoreoDocs", ["docs", "tokens", "_additional {certainty}"]) \
+        .query.get("ChoreoInfo", ["docs", "tokens", "source", "_additional {certainty}"]) \
         .with_near_vector(near_vec) \
         .with_limit(limit) \
         .do()
     search_took = time.time() - before
 
     logging.error("\nQuery \"{}\" with {} results took {:.3f}s ({:.3f}s to vectorize and {:.3f}s to search)" \
-          .format(query, limit, vec_took+search_took, vec_took, search_took))
+                  .format(query, limit, vec_took + search_took, vec_took, search_took))
     # print("\nQuery \"{}\" with {} results took {:.3f}s ({:.3f}s to vectorize and {:.3f}s to search)" \
     #       .format(query, limit, vec_took+search_took, vec_took, search_took))
-    documents = res["data"]["Get"]["ChoreoDocs"]
+    documents = res["data"]["Get"]["ChoreoInfo"]
     return documents
 
 
@@ -101,15 +101,15 @@ def construct_prompt(question) -> str:
         if chosen_sections_len > MAX_SECTION_LEN:
             break
 
-        chosen_sections.append(SEPARATOR + document_section['docs'].replace("\n", " "))
+        chosen_section = SEPARATOR + document_section["docs"].replace("\n", " ") \
+                         + " (Source: " + document_section["source"] + ")"
 
-    # Useful diagnostic information
-    # print(f"Selected {len(chosen_sections)} document sections:")
-    # print("\n".join(chosen_sections_indexes))
+        chosen_sections.append(chosen_section)
 
-    header = """Answer the question as truthfully as possible using the provided context, and if the answer is not 
-    contained within the text below, say "Sorry, I didn't understand the question. 
-    If it is about Choreo, could you please rephrase it and try again?"\n\nContext:\n"""
+    header = "Answer the question as truthfully and descriptively as possible using the provided context, " \
+             "and if the answer is not contained within the text below, say \"Sorry, I didn't understand the " \
+             "question. If it is about Choreo, could you please rephrase it and try again?\". " \
+             "Additionally provide only the sources of the relevant information as \"Learn More\"\n\nContext:\n"
 
     return header + "".join(chosen_sections) + "\n\n Q: " + question + "\n A:"
 
